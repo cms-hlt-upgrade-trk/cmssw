@@ -15,6 +15,7 @@ trackWithVertexSelectorParams = cms.PSet(
     normalizedChi2 = cms.double(999999.),
     numberOfValidHits = cms.uint32(0),
     numberOfLostHits = cms.uint32(999), ## at most 999 lost hits
+    maxNumberOfValidPixelHits = cms.uint32(999), ## at most <n> hits in the pixels
     numberOfValidPixelHits = cms.uint32(0), ## at least <n> hits in the pixels
     ptErrorCut = cms.double(0.2), ## [pTError/pT]*max(1,normChi2) <= ptErrorCut
     quality = cms.string("highPurity"), # quality cut as defined in reco::TrackBase

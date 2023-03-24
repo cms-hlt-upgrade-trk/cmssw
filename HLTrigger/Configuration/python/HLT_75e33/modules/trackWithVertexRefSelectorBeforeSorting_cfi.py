@@ -10,6 +10,7 @@ trackWithVertexRefSelectorBeforeSorting = cms.EDProducer("TrackWithVertexRefSele
     nSigmaDtVertex = cms.double(0),
     nVertices = cms.uint32(0),
     normalizedChi2 = cms.double(999999.0),
+    maxNumberOfValidPixelHits = cms.uint32(999),
     numberOfLostHits = cms.uint32(999),
     numberOfValidHits = cms.uint32(0),
     numberOfValidPixelHits = cms.uint32(0),

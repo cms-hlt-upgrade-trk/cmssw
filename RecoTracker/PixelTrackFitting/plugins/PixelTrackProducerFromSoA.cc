@@ -210,9 +210,18 @@ void PixelTrackProducerFromSoAT<TrackerTraits>::produce(edm::StreamID streamID,
 
     LocalTrajectoryParameters lpar(opar(0), opar(1), opar(2), opar(3), opar(4), 1.);
     AlgebraicSymMatrix55 m;
+    bool somenan = false;
     for (int i = 0; i < 5; ++i)
-      for (int j = i; j < 5; ++j)
-        m(i, j) = ocov(i, j);
+    {  for (int j = i; j < 5; ++j)
+        {
+          m(i, j) = ocov(i, j);
+          if(std::isnan(ocov(i, j)))
+            somenan = true;
+        }
+    }
+
+    if(somenan)
+      continue;
 
     float sp = std::sin(phi);
     float cp = std::cos(phi);
@@ -228,6 +237,8 @@ void PixelTrackProducerFromSoAT<TrackerTraits>::produce(edm::StreamID streamID,
     int ndof = 2 * hits.size() - 5;
     chi2 = chi2 * ndof;
     GlobalPoint vv = gp.position();
+    // if (hits.size()<4)
+    //   vv = bs;
     math::XYZPoint pos(vv.x(), vv.y(), vv.z());
     GlobalVector pp = gp.momentum();
     math::XYZVector mom(pp.x(), pp.y(), pp.z());
