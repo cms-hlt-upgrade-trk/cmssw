@@ -64,12 +64,9 @@ def customisePhase2HLTForTrackingOnly(process):
     
     #Baseline tracking path
     process.HLTTrackingV61Path = cms.Path(process.HLTTrackingV61Sequence)
-
-    process.RawToDigiTask = cms.Task(process.ecalDigisTask, process.ecalPreshowerDigis, process.hcalDigis, process.hgcalDigis, process.muonCSCDigis, process.muonDTDigis, process.muonGEMDigis)
-    process.calolocalrecoTask = cms.Task(process.hcalGlobalRecoTask,process.ecalLocalRecoTask, process.hcalLocalRecoTask)
-
-    process.hrecoTask = cms.Task(process.RawToDigiTask, process.calolocalrecoTask)
-    process.localSeq = cms.Sequence(process.hrecoTask) #For the moment no MTD,process.mtdRecoTask)
+ 
+    process.localTask = cms.Task(process.RawToDigiTask, process.calolocalrecoTask)
+    process.localSeq = cms.Sequence(process.localTask) #For the moment no MTD,process.mtdRecoTask)
     process.localPath = cms.Path(process.localSeq)
 
     process.vertexRecoTask = cms.Task(process.ak4CaloJetsForTrk, process.initialStepPVTask, process.offlinePrimaryVertices, process.trackRefsForJetsBeforeSorting, process.trackWithVertexRefSelectorBeforeSorting, process.unsortedOfflinePrimaryVertices,process.goodOfflinePrimaryVertices)
