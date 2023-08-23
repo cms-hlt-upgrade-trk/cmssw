@@ -179,7 +179,7 @@ def customisePhase2HLTForPatatrack(process):
 
     ### Pixeltracks
 
-    from RecoPixelVertexing.PixelTriplets.caHitNtupletCUDAPhase2_cfi import caHitNtupletCUDAPhase2 as _pixelTracksCUDAPhase2
+    from RecoTracker.PixelSeeding.caHitNtupletCUDAPhase2_cfi import caHitNtupletCUDAPhase2 as _pixelTracksCUDAPhase2
     process.pixelTracksCUDA = _pixelTracksCUDAPhase2.clone(
         pixelRecHitSrc = "siPixelRecHitsCUDA",
         idealConditions = False,
@@ -188,7 +188,7 @@ def customisePhase2HLTForPatatrack(process):
         minHitsPerNtuplet = 4
     )
 
-    from RecoPixelVertexing.PixelTrackFitting.pixelTrackSoAFromCUDAPhase2_cfi import pixelTrackSoAFromCUDAPhase2 as _pixelTracksSoAPhase2
+    from RecoTracker.PixelTrackFitting.pixelTrackSoAFromCUDAPhase2_cfi import pixelTrackSoAFromCUDAPhase2 as _pixelTracksSoAPhase2
     process.pixelTracksSoA = SwitchProducerCUDA(
         # build pixel ntuplets and pixel tracks in SoA format on the CPU
         cpu = _pixelTracksCUDAPhase2.clone(
@@ -201,7 +201,7 @@ def customisePhase2HLTForPatatrack(process):
         cuda = _pixelTracksSoAPhase2.clone()
     )
 
-    from RecoPixelVertexing.PixelTrackFitting.pixelTrackProducerFromSoAPhase2_cfi import pixelTrackProducerFromSoAPhase2 as _pixelTrackProducerFromSoAPhase2
+    from RecoTracker.PixelTrackFitting.pixelTrackProducerFromSoAPhase2_cfi import pixelTrackProducerFromSoAPhase2 as _pixelTrackProducerFromSoAPhase2
     process.pixelTracks = _pixelTrackProducerFromSoAPhase2.clone(
         pixelRecHitLegacySrc = "siPixelRecHits"
     )
