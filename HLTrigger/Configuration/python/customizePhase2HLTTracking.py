@@ -35,16 +35,16 @@ def addTrackingValidation(process):
     process.vertexAnalysis = vertexAnalysis.clone()
 
     #DQM
-    process.DQMoutput = cms.OutputModule("DQMRootOutputModule",
-        dataset = cms.untracked.PSet(
-            dataTier = cms.untracked.string('DQMIO'),
-            filterName = cms.untracked.string('')
-        ),
-        fileName = cms.untracked.string('file:Phase2HLT_DQM.root'),
-        outputCommands = process.DQMEventContent.outputCommands,
-        splitLevel = cms.untracked.int32(0)
-    )
-    process.DQMoutput_step = cms.EndPath(process.DQMoutput)
+    #process.DQMoutput = cms.OutputModule("DQMRootOutputModule",
+    #    dataset = cms.untracked.PSet(
+    #        dataTier = cms.untracked.string('DQMIO'),
+    #        filterName = cms.untracked.string('')
+    #    ),
+    #    fileName = cms.untracked.string('file:Phase2HLT_DQM.root'),
+    #    outputCommands = process.DQMEventContent.outputCommands,
+    #    splitLevel = cms.untracked.int32(0)
+   #)
+   #process.DQMoutput_step = cms.EndPath(process.DQMoutput)
     process.dqm = cms.Task(process.pvMonitor, process.TrackSplitMonitor,process.dqmInfoTracking,process.TrackerCollisionSelectedTrackMonCommongeneralTracks,process.TrackMon_gentk)
     process.dqm_step = cms.EndPath(process.dqm)
 
@@ -185,7 +185,11 @@ def customisePhase2HLTForPatatrack(process):
         idealConditions = False,
         onGPU = True,
         includeJumpingForwardDoublets = True,
-        minHitsPerNtuplet = 4
+        minHitsPerNtuplet = 4,
+        z0Cut = 15,
+        hardCurvCut = 0.0127,
+        ptCut = 0.95
+        
     )
 
     from RecoPixelVertexing.PixelTrackFitting.pixelTrackSoAFromCUDAPhase2_cfi import pixelTrackSoAFromCUDAPhase2 as _pixelTracksSoAPhase2
@@ -196,7 +200,10 @@ def customisePhase2HLTForPatatrack(process):
             idealConditions = False,
             onGPU = False,
             includeJumpingForwardDoublets = True,
-        	minHitsPerNtuplet = 4
+        	minHitsPerNtuplet = 4,
+            z0Cut = 15,
+            hardCurvCut = 0.0127,
+            ptCut = 0.95
         ),
         cuda = _pixelTracksSoAPhase2.clone()
     )
@@ -244,8 +251,222 @@ def customisePhase2HLTForPatatrack(process):
     return process
 
 
+def customisePhase2HLTForPatatrack(process):
+
+    from HeterogeneousCore.CUDACore.SwitchProducerCUDA import SwitchProducerCUDA
+    process.load("Configuration.StandardSequences.Accelerators_cff")
+
+    ##############################
+    #####################
+    ######
+    ###
+    ###
+
+###
+############
+    ##################
+    if not hasattr(process, "CUDAService"):
+        from HeterogeneousCore.CUDAServices.CUDAService_cfi import CUDAService
+        process.add_(CUDAService)
+    
+    from RecoLocalTracker.SiPixelRecHits.pixelCPEFastESProducerPhase2_cfi import pixelCPEFastESProducerPhase2
+    process.PixelCPEFastESProducerPhase2 = pixelCPEFastESProducerPhase2.clone()
+    ### SiPixelClusters on GPU
+
+    process.siPixelClustersLegacy = process.siPixelClusters.clone()
+
+    from RecoLocalTracker.SiPixelClusterizer.siPixelPhase2DigiToClusterCUDA_cfi import siPixelPhase2DigiToClusterCUDA as _siPixelPhase2DigiToClusterCUDA
+    process.siPixelClustersCUDA = _siPixelPhase2DigiToClusterCUDA.clone()
+    
+    from EventFilter.SiPixelRawToDigi.siPixelDigisSoAFromCUDA_cfi import siPixelDigisSoAFromCUDA as _siPixelDigisSoAFromCUDA
+    process.siPixelDigisPhase2SoA = _siPixelDigisSoAFromCUDA.clone(
+        src = "siPixelClusters"
+    )
+
+    from RecoLocalTracker.SiPixelClusterizer.siPixelDigisClustersFromSoAPhase2_cfi import siPixelDigisClustersFromSoAPhase2 as _siPixelDigisClustersFromSoAPhase2
+
+    process.siPixelClusters = SwitchProducerCUDA(
+        cpu = cms.EDAlias(
+            siPixelClustersLegacy = cms.VPSet(cms.PSet(
+                type = cms.string('SiPixelClusteredmNewDetSetVector')
+            ))
+            ),
+        cuda = _siPixelDigisClustersFromSoAPhase2.clone(
+            clusterThreshold_layer1 = 4000,
+            clusterThreshold_otherLayers = 4000,
+            src = "siPixelDigisPhase2SoA",
+            produceDigis = False
+            )
+    )
+
+    process.siPixelClustersTask = cms.Task(
+                            process.siPixelClustersLegacy,
+                            process.siPixelClustersCUDA,
+                            process.siPixelDigisPhase2SoA,
+                            process.siPixelClusters)
+    
+    ### SiPixel Hits
+
+    from RecoLocalTracker.SiPixelRecHits.siPixelRecHitCUDAPhase2_cfi import siPixelRecHitCUDAPhase2 as _siPixelRecHitCUDAPhase2
+    process.siPixelRecHitsCUDA = _siPixelRecHitCUDAPhase2.clone(
+        src = cms.InputTag('siPixelClustersCUDA'),
+        beamSpot = "offlineBeamSpotToCUDA"
+    )
+    from RecoLocalTracker.SiPixelRecHits.siPixelRecHitSoAFromLegacyPhase2_cfi import siPixelRecHitSoAFromLegacyPhase2 as _siPixelRecHitsSoAPhase2
+    process.siPixelRecHitsCPU = _siPixelRecHitsSoAPhase2.clone(
+        convertToLegacy=True, 
+        src = cms.InputTag('siPixelClusters'),
+        CPE = cms.string('PixelCPEFastPhase2'))
+
+    from RecoLocalTracker.SiPixelRecHits.siPixelRecHitSoAFromCUDAPhase2_cfi import siPixelRecHitSoAFromCUDAPhase2 as _siPixelRecHitSoAFromCUDAPhase2
+    process.siPixelRecHitsSoA = SwitchProducerCUDA(
+        cpu = cms.EDAlias(
+            siPixelRecHitsCPU = cms.VPSet(
+                 cms.PSet(type = cms.string("pixelTopologyPhase2TrackingRecHitSoAHost")),
+                 cms.PSet(type = cms.string("uintAsHostProduct"))
+             )),
+        cuda = _siPixelRecHitSoAFromCUDAPhase2.clone()
+
+    )
 
     
+    from RecoLocalTracker.SiPixelRecHits.siPixelRecHitFromCUDAPhase2_cfi import siPixelRecHitFromCUDAPhase2 as _siPixelRecHitFromCUDAPhase2
 
+    _siPixelRecHits = SwitchProducerCUDA(
+        cpu = cms.EDAlias(
+            siPixelRecHitsCPU = cms.VPSet(
+                 cms.PSet(type = cms.string("SiPixelRecHitedmNewDetSetVector")),
+                 cms.PSet(type = cms.string("uintAsHostProduct"))
+             )),
+        cuda = _siPixelRecHitFromCUDAPhase2.clone(
+            pixelRecHitSrc = cms.InputTag('siPixelRecHitsCUDA'),
+            src = cms.InputTag('siPixelClusters'),
+        )
+    )
+
+    process.siPixelRecHits = _siPixelRecHits.clone()
+    process.siPixelRecHitsTask = cms.Task(
+        process.siPixelRecHitsCUDA,
+        process.siPixelRecHitsCPU,
+        process.siPixelRecHits,
+        process.siPixelRecHitsSoA
+        )
+    
+    ### Pixeltracks
+
+    from RecoTracker.PixelSeeding.caHitNtupletCUDAPhase2_cfi import caHitNtupletCUDAPhase2 as _pixelTracksCUDAPhase2
+    process.pixelTracksCUDA = _pixelTracksCUDAPhase2.clone(
+        pixelRecHitSrc = "siPixelRecHitsCUDA",
+        idealConditions = False,
+        onGPU = True,
+        includeJumpingForwardDoublets = True,
+        minHitsPerNtuplet = 4
+    )
+
+    from RecoTracker.PixelTrackFitting.pixelTrackSoAFromCUDAPhase2_cfi import pixelTrackSoAFromCUDAPhase2 as _pixelTracksSoAPhase2
+    process.pixelTracksSoA = SwitchProducerCUDA(
+        # build pixel ntuplets and pixel tracks in SoA format on the CPU
+        cpu = _pixelTracksCUDAPhase2.clone(
+            pixelRecHitSrc = "siPixelRecHitsCPU",
+            idealConditions = False,
+            onGPU = False,
+            includeJumpingForwardDoublets = True,
+        	minHitsPerNtuplet = 4
+        ),
+        cuda = _pixelTracksSoAPhase2.clone()
+    )
+
+    from RecoTracker.PixelTrackFitting.pixelTrackProducerFromSoAPhase2_cfi import pixelTrackProducerFromSoAPhase2 as _pixelTrackProducerFromSoAPhase2
+    process.pixelTracks = _pixelTrackProducerFromSoAPhase2.clone(
+        pixelRecHitLegacySrc = "siPixelRecHits"
+    )
+
+    ### Allow with more than 3 hits (to be sure)
+    process.initialStepSeeds.includeFourthHit = cms.bool(True)
+
+    process.pixelTracksTask = cms.Task(
+        process.pixelTracksCUDA,
+        process.pixelTracksSoA,
+        process.pixelTracks
+    )
+
+    process.HLTTrackingV61Task = cms.Task(process.MeasurementTrackerEvent, 
+                                          process.generalTracks, 
+                                          process.highPtTripletStepClusters, 
+                                          process.highPtTripletStepHitDoublets, 
+                                          process.highPtTripletStepHitTriplets, 
+                                          process.highPtTripletStepSeedLayers, 
+                                          process.highPtTripletStepSeeds, 
+                                          process.highPtTripletStepTrackCandidates, 
+                                          process.highPtTripletStepTrackCutClassifier, 
+                                          process.highPtTripletStepTrackSelectionHighPurity, 
+                                          process.highPtTripletStepTrackingRegions, 
+                                          process.highPtTripletStepTracks, 
+                                          process.initialStepSeeds, 
+                                          process.initialStepTrackCandidates, 
+                                          process.initialStepTrackCutClassifier, 
+                                          process.initialStepTrackSelectionHighPurity, 
+                                          process.initialStepTracks, 
+                                          process.pixelVertices, ## for the moment leaving it as it was
+                                          )
+
+    process.trackerClusterCheckTask = cms.Task(process.trackerClusterCheck,
+                                               process.siPhase2Clusters, 
+                                               process.siPixelClusterShapeCache)
+    process.HLTTrackingV61Sequence = cms.Sequence(process.trackerClusterCheckTask,
+                                                  process.siPixelClustersTask,
+                                                  process.siPixelRecHitsTask,
+                                                  process.pixelTracksTask,
+                                                  process.HLTTrackingV61Task)
+    
+    return process
+
+def customisePhase2HLTForPatatrackOneIter(process):
+
+    process = customisePhase2HLTForPatatrack(process)
+
+    process.pixelTracksSoA.cpu.minHitsPerNtuplet = 3
+    process.pixelTracksSoA.cpu.includeFarForwards = True
+
+    process.pixelTracksCUDA.minHitsPerNtuplet = 3
+    process.pixelTracksCUDA.includeFarForwards = True
+
+    process.generalTracks = process.initialStepTrackSelectionHighPurity.clone()
+
+    process.HLTTrackingV61Task = cms.Task(process.MeasurementTrackerEvent, 
+                                          process.generalTracks, 
+                                          process.initialStepSeeds, 
+                                          process.initialStepTrackCandidates, 
+                                          process.initialStepTrackCutClassifier, 
+                                          #process.initialStepTrackSelectionHighPurity, 
+                                          process.initialStepTracks, 
+                                          process.pixelVertices, ## for the moment leaving it as it was
+                                          )
+    
+    return process
+    
+
+def customisePhase2HLTForWeightedVertexing():
+
+    process.unsortedOfflinePrimaryVertices.vertexCollections = cms.VPSet(
+                           [cms.PSet(label=cms.string(""),
+                                     algorithm=cms.string("WeightedMeanFitter"),
+                                     chi2cutoff = cms.double(2.5),
+                                     minNdof=cms.double(0.0),
+                                     useBeamConstraint = cms.bool(False),
+                                     maxDistanceToBeam = cms.double(1.0)
+                           ),
+                           cms.PSet(label=cms.string("WithBS"),
+                                     algorithm = cms.string('WeightedMeanFitter'),
+                                     minNdof=cms.double(0.0),
+                                     chi2cutoff = cms.double(2.5),
+                                     useBeamConstraint = cms.bool(True),
+                                     maxDistanceToBeam = cms.double(1.0)
+                                     )
+                           ]
+                           )
+
+    return process                        
+   
 
     
