@@ -11,5 +11,7 @@ initialStepSeeds = cms.EDProducer("SeedGeneratorFromProtoTracksEDProducer",
     originRadius = cms.double(0.1),
     useEventsWithNoVertex = cms.bool(True),
     usePV = cms.bool(False),
-    useProtoTrackKinematics = cms.bool(False)
+    useProtoTrackKinematics = cms.bool(False),
+    includeFourthHit = cms.bool(True)
+
 )
