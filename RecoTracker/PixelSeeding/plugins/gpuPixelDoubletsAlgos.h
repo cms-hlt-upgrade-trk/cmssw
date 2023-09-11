@@ -206,10 +206,10 @@ namespace gpuPixelDoublets {
 
       if (mez < TrackerTraits::minz[pairLayerId] || mez > TrackerTraits::maxz[pairLayerId])
         continue;
-
+      //if(inner == 0 && outer == 2) printf("%d\n",__LINE__);
       if (doClusterCut && outer > pixelTopology::last_barrel_layer && cuts.clusterCut(hh, i))
         continue;
-
+      //if(inner == 0 && outer == 2) printf("%d\n",__LINE__);
       auto mep = hh[i].iphi();
       auto mer = hh[i].rGlobal();
 
@@ -224,7 +224,7 @@ namespace gpuPixelDoublets {
         auto zo = hh[j].zGlobal();
         auto ro = hh[j].rGlobal();
         auto dr = ro - mer;
-        return dr > TrackerTraits::maxr[pairLayerId] || dr < 0 || std::abs((mez * ro - mer * zo)) > z0cut * dr;
+        return dr > TrackerTraits::maxr[pairLayerId] || dr < 0 || std::abs((mez * ro - mer * zo)) > z0cut * dr; 
       };
 
       auto iphicut = cuts.phiCuts[pairLayerId];
@@ -257,19 +257,21 @@ namespace gpuPixelDoublets {
 
           if (mo > gpuClustering::maxNumModules)
             continue;  //    invalid
-
+          //if(inner == 0 && outer == 2) printf("%d\n",__LINE__);
           if (doZ0Cut && z0cutoff(oi))
             continue;
+          //if(inner == 0 && outer == 2) printf("%d\n",__LINE__);
           auto mop = hh[oi].iphi();
           uint16_t idphi = std::min(std::abs(int16_t(mop - mep)), std::abs(int16_t(mep - mop)));
           if (idphi > iphicut)
             continue;
-
+          //if(inner == 0 && outer == 2) printf("%d\n",__LINE__);
           if (doClusterCut && cuts.zSizeCut(hh, i, oi))
             continue;
+          //if(inner == 0 && outer == 2) printf("%d\n",__LINE__);
           if (doPtCut && ptcut(oi, idphi))
             continue;
-
+          //if(inner == 0 && outer == 2) printf("%d\n",__LINE__);
           auto ind = atomicAdd(nCells, 1);
           if (ind >= maxNumOfDoublets) {
             atomicSub(nCells, 1);
@@ -287,8 +289,8 @@ namespace gpuPixelDoublets {
       }
 //      #endif
 #ifdef GPU_DEBUG
-      if (tooMany > 0)
-        printf("OuterHitOfCell full for %d in layer %d/%d, %d,%d %d, %d %.3f %.3f\n",
+      if (tooMany > 0 or (inner == 0 && outer == 2))
+        printf("OuterHitOfCell full for %d in layer %d/%d, %d,%d %d, %d %.3f %.3f %.3f\n",
                i,
                inner,
                outer,
@@ -297,7 +299,8 @@ namespace gpuPixelDoublets {
                tooMany,
                iphicut,
                TrackerTraits::minz[pairLayerId],
-               TrackerTraits::maxz[pairLayerId]);
+               TrackerTraits::maxz[pairLayerId],
+               TrackerTraits::maxr[pairLayerId]);
 #endif
     }  // loop in block...
   }
