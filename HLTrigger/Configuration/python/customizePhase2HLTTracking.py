@@ -85,14 +85,17 @@ def customisePhase2HLTForTrackingOnly(process):
         
     return process
 
-
 def customisePhase2HLTForPatatrack(process):
 
     from HeterogeneousCore.CUDACore.SwitchProducerCUDA import SwitchProducerCUDA
+    process.load("Configuration.StandardSequences.Accelerators_cff")
 
     if not hasattr(process, "CUDAService"):
         from HeterogeneousCore.CUDAServices.CUDAService_cfi import CUDAService
         process.add_(CUDAService)
+
+    from RecoVertex.BeamSpotProducer.offlineBeamSpotToCUDA_cfi import offlineBeamSpotToCUDA as _offlineBeamSpotToCUDA
+    process.onlineBeamSpotToCUDA = _offlineBeamSpotToCUDA.clone(src = cms.InputTag('hltOnlineBeamSpot'))
 
     from RecoLocalTracker.SiPixelRecHits.pixelCPEFastESProducerPhase2_cfi import pixelCPEFastESProducerPhase2
     process.PixelCPEFastESProducerPhase2 = pixelCPEFastESProducerPhase2.clone()
@@ -105,7 +108,7 @@ def customisePhase2HLTForPatatrack(process):
     
     from EventFilter.SiPixelRawToDigi.siPixelDigisSoAFromCUDA_cfi import siPixelDigisSoAFromCUDA as _siPixelDigisSoAFromCUDA
     process.siPixelDigisPhase2SoA = _siPixelDigisSoAFromCUDA.clone(
-        src = "siPixelClusters"
+        src = "siPixelClustersCUDA"
     )
 
     from RecoLocalTracker.SiPixelClusterizer.siPixelDigisClustersFromSoAPhase2_cfi import siPixelDigisClustersFromSoAPhase2 as _siPixelDigisClustersFromSoAPhase2
@@ -125,6 +128,7 @@ def customisePhase2HLTForPatatrack(process):
     )
 
     process.siPixelClustersTask = cms.Task(
+                            process.onlineBeamSpotToCUDA,
                             process.siPixelClustersLegacy,
                             process.siPixelClustersCUDA,
                             process.siPixelDigisPhase2SoA,
@@ -135,13 +139,14 @@ def customisePhase2HLTForPatatrack(process):
     from RecoLocalTracker.SiPixelRecHits.siPixelRecHitCUDAPhase2_cfi import siPixelRecHitCUDAPhase2 as _siPixelRecHitCUDAPhase2
     process.siPixelRecHitsCUDA = _siPixelRecHitCUDAPhase2.clone(
         src = cms.InputTag('siPixelClustersCUDA'),
-        beamSpot = "offlineBeamSpotToCUDA"
+        beamSpot = "onlineBeamSpotToCUDA"
     )
     from RecoLocalTracker.SiPixelRecHits.siPixelRecHitSoAFromLegacyPhase2_cfi import siPixelRecHitSoAFromLegacyPhase2 as _siPixelRecHitsSoAPhase2
     process.siPixelRecHitsCPU = _siPixelRecHitsSoAPhase2.clone(
         convertToLegacy=True, 
-        src = cms.InputTag('siPixelClusters'),
-        CPE = cms.string('PixelCPEFastPhase2'))
+        src = 'siPixelClusters',
+        CPE = 'PixelCPEFastPhase2',
+        beamSpot = "hltOnlineBeamSpot")
 
     from RecoLocalTracker.SiPixelRecHits.siPixelRecHitSoAFromCUDAPhase2_cfi import siPixelRecHitSoAFromCUDAPhase2 as _siPixelRecHitSoAFromCUDAPhase2
     process.siPixelRecHitsSoA = SwitchProducerCUDA(
@@ -178,7 +183,6 @@ def customisePhase2HLTForPatatrack(process):
         )
 
     ### Pixeltracks
-
     from RecoTracker.PixelSeeding.caHitNtupletCUDAPhase2_cfi import caHitNtupletCUDAPhase2 as _pixelTracksCUDAPhase2
     process.pixelTracksCUDA = _pixelTracksCUDAPhase2.clone(
         pixelRecHitSrc = "siPixelRecHitsCUDA",
@@ -203,7 +207,8 @@ def customisePhase2HLTForPatatrack(process):
 
     from RecoTracker.PixelTrackFitting.pixelTrackProducerFromSoAPhase2_cfi import pixelTrackProducerFromSoAPhase2 as _pixelTrackProducerFromSoAPhase2
     process.pixelTracks = _pixelTrackProducerFromSoAPhase2.clone(
-        pixelRecHitLegacySrc = "siPixelRecHits"
+        pixelRecHitLegacySrc = "siPixelRecHits",
+        beamSpot = "hltOnlineBeamSpot"
     )
 
     process.pixelTracksTask = cms.Task(
@@ -241,11 +246,4 @@ def customisePhase2HLTForPatatrack(process):
                                                   process.pixelTracksTask,
                                                   process.HLTTrackingV61Task)
     
-    return process
-
-
-
-    
-
-
-    
+    return process    
