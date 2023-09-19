@@ -215,18 +215,168 @@ def customisePhase2HLTForPatatrack(process):
     ### Pixeltracks
 
     from RecoTracker.PixelSeeding.caHitNtupletCUDAPhase2_cfi import caHitNtupletCUDAPhase2 as _pixelTracksCUDAPhase2
-    process.pixelTracksCUDA = _pixelTracksCUDAPhase2.clone(
-        pixelRecHitSrc = "siPixelRecHitsCUDA",
-        idealConditions = False,
-        onGPU = True,
-        includeJumpingForwardDoublets = True,
-        minHitsPerNtuplet = 4,
-        z0Cut = 10,
-        hardCurvCut = 0.012,
-        ptCut = 0.95,
-        dupPassThrough = False
+    # process.pixelTracksCUDA = _pixelTracksCUDAPhase2.clone(
+    #     pixelRecHitSrc = "siPixelRecHitsCUDA",
+    #     idealConditions = False,
+    #     onGPU = True,
+    #     includeJumpingForwardDoublets = True,
+    #     minHitsPerNtuplet = 4,
+    #     z0Cut = 10,
+    #     hardCurvCut = 0.012,
+    #     ptCut = 0.95,
+    #     dupPassThrough = False
         
-    )
+    # )
+
+    process.pixelTracksCUDA = cms.EDProducer("CAHitNtupletCUDAPhase2",
+
+    # CAThetaCutBarrel = cms.double(0.006),
+    # CAThetaCutForward = cms.double(0.001363453691948839),
+    # dcaCutInnerTriplet = cms.double(0.016623433752720233),
+    # dcaCutOuterTriplet = cms.double(0.20183371949043288),
+    # doClusterCut = cms.bool(True),
+    # doPtCut = cms.bool(True),
+    # doSharedHitCut = cms.bool(True),
+    # doZ0Cut = cms.bool(True),
+    # dupPassThrough = cms.bool(False),
+    # earlyFishbone = cms.bool(True),
+    # fillStatistics = cms.bool(False),
+    # fitNas4 = cms.bool(False),
+    # hardCurvCut = cms.double(0.6212705662183171),
+    # idealConditions = cms.bool(False),
+    # includeFarForwards = cms.bool(True),
+    # includeJumpingForwardDoublets = cms.bool(True),
+    # lateFishbone = cms.bool(False),
+    # maxNumberOfDoublets = cms.uint32(2621440),
+    # mightGet = cms.optional.untracked.vstring,
+    # minHitsForSharingCut = cms.uint32(10),
+    # minHitsPerNtuplet = cms.uint32(3),
+    # onGPU = cms.bool(True),
+    # phiCuts = cms.vint32(
+    #     903, 722, 996, 692, 726,
+    #     992, 486, 815, 1000, 400,
+    #     561, 757, 760, 466, 1000,
+    #     1000, 489, 751, 542, 721,
+    #     1000, 1000, 400, 763, 917,
+    #     400, 1000, 906, 400, 941,
+    #     592, 603, 1000, 1000, 772,
+    #     1000, 516, 674, 400, 859,
+    #     965, 1000, 570, 1000, 437,
+    #     599, 662, 668, 686, 400,
+    #     428, 910, 776, 499, 916
+    # ),
+    # pixelRecHitSrc = cms.InputTag("siPixelRecHitsCUDA"),
+    # ptCut = cms.double(0.8500000238418579),
+    # ptmin = cms.double(0.8999999761581421),
+    # trackQualityCuts = cms.PSet(
+    #     maxChi2 = cms.double(5),
+    #     maxTip = cms.double(0.3),
+    #     maxZip = cms.double(12),
+    #     minPt = cms.double(0.5)
+    # ),
+    # useRiemannFit = cms.bool(False),
+    # useSimpleTripletCleaner = cms.bool(True),
+    # z0Cut = cms.double(12.707861959253352)
+
+    ## no jump
+    # CAThetaCutBarrel = cms.double(0.002853725128146409),
+    # CAThetaCutForward = cms.double(0.016065619347025797),
+    # dcaCutInnerTriplet = cms.double(0.012782204227053838),
+    # dcaCutOuterTriplet = cms.double(0.12081458184336838),
+    # doClusterCut = cms.bool(True),
+    # doPtCut = cms.bool(True),
+    # doSharedHitCut = cms.bool(True),
+    # doZ0Cut = cms.bool(True),
+    # dupPassThrough = cms.bool(False),
+    # earlyFishbone = cms.bool(True),
+    # fillStatistics = cms.bool(False),
+    # fitNas4 = cms.bool(False),
+    # hardCurvCut = cms.double(0.3423589999174777),
+    # idealConditions = cms.bool(False),
+    # includeFarForwards = cms.bool(True),
+    # includeJumpingForwardDoublets = cms.bool(True),
+    # lateFishbone = cms.bool(False),
+    # maxNumberOfDoublets = cms.uint32(2621440),
+    # mightGet = cms.optional.untracked.vstring,
+    # minHitsForSharingCut = cms.uint32(10),
+    # minHitsPerNtuplet = cms.uint32(3),
+    # onGPU = cms.bool(True),
+    # phiCuts = cms.vint32(
+    #     674, 593, 843, 844, 501,
+    #     751, 688, 911, 670, 400,
+    #     641, 839, 777, 661, 791,
+    #     854, 930, 634, 412, 588,
+    #     726, 755, 733, 512, 901,
+    #     400, 809, 465, 654, 573,
+    #     573, 777, 623, 682, 528,
+    #     400, 406, 746, 975, 906,
+    #     755, 477, 764, 872, 642,
+    #     621, 853, 718, 965, 775,
+    #     707, 607, 843, 768, 634
+    # ),
+    # pixelRecHitSrc = cms.InputTag("siPixelRecHitsCUDA"),
+    # ptCut = cms.double(0.8500000238418579),
+    # ptmin = cms.double(0.8999999761581421),
+    # trackQualityCuts = cms.PSet(
+    #     maxChi2 = cms.double(5),
+    #     maxTip = cms.double(0.3),
+    #     maxZip = cms.double(12),
+    #     minPt = cms.double(0.5)
+    # ),
+    # useRiemannFit = cms.bool(False),
+    # useSimpleTripletCleaner = cms.bool(True),
+    # z0Cut = cms.double(9.958220068831185)
+
+    ## with jump
+    CAThetaCutBarrel = cms.double(0.002518561301574317),
+    CAThetaCutForward = cms.double(0.009649516058900914),
+    dcaCutInnerTriplet = cms.double(0.007099381977144485),
+    dcaCutOuterTriplet = cms.double(0.14969121682516986),
+    doClusterCut = cms.bool(True),
+    doPtCut = cms.bool(True),
+    doSharedHitCut = cms.bool(True),
+    doZ0Cut = cms.bool(True),
+    dupPassThrough = cms.bool(False),
+    earlyFishbone = cms.bool(True),
+    fillStatistics = cms.bool(False),
+    fitNas4 = cms.bool(False),
+    hardCurvCut = cms.double(0.707609612658449),
+    idealConditions = cms.bool(False),
+    includeFarForwards = cms.bool(True),
+    includeJumpingForwardDoublets = cms.bool(True),
+    lateFishbone = cms.bool(False),
+    maxNumberOfDoublets = cms.uint32(2621440),
+    mightGet = cms.optional.untracked.vstring,
+    minHitsForSharingCut = cms.uint32(10),
+    minHitsPerNtuplet = cms.uint32(3),
+    onGPU = cms.bool(True),
+    phiCuts = cms.vint32(
+        716, 841, 736, 467, 999,
+        423, 909, 862, 983, 950,
+        735, 479, 542, 420, 974,
+        987, 465, 423, 629, 822,
+        449, 462, 851, 922, 848,
+        422, 743, 963, 966, 561,
+        572, 415, 628, 438, 945,
+        437, 934, 743, 653, 412,
+        773, 790, 952, 932, 459,
+        516, 472, 928, 655, 479,
+        971, 983, 788, 982, 497
+    ),
+    pixelRecHitSrc = cms.InputTag("siPixelRecHitsCUDA"),
+    ptCut = cms.double(0.8500000238418579),
+    ptmin = cms.double(0.8999999761581421),
+    trackQualityCuts = cms.PSet(
+        maxChi2 = cms.double(5),
+        maxTip = cms.double(0.3),
+        maxZip = cms.double(12),
+        minPt = cms.double(0.5)
+    ),
+    useRiemannFit = cms.bool(False),
+    useSimpleTripletCleaner = cms.bool(True),
+    z0Cut = cms.double(12.851884460665062)
+
+)
 
     from RecoTracker.PixelTrackFitting.pixelTrackSoAFromCUDAPhase2_cfi import pixelTrackSoAFromCUDAPhase2 as _pixelTracksSoAPhase2
     process.pixelTracksSoA = SwitchProducerCUDA(
@@ -244,8 +394,6 @@ def customisePhase2HLTForPatatrack(process):
         ),
         cuda = _pixelTracksSoAPhase2.clone()
     )
-    
-    process.initialStepSeeds.includeFourthHit = cms.bool(True)
 
     from RecoTracker.PixelTrackFitting.pixelTrackProducerFromSoAPhase2_cfi import pixelTrackProducerFromSoAPhase2 as _pixelTrackProducerFromSoAPhase2
     process.pixelTracks = _pixelTrackProducerFromSoAPhase2.clone(
@@ -372,12 +520,12 @@ def customisePhase2HLTForPatatrackOneIter(process):
     process.pixelTracksCUDA.includeJumpingForwardDoublets = False
     process.pixelTracksCUDA.dupPassThrough = False
     # process.pixelTracksCUDA.doClusterCut = True
-    process.pixelTracksCUDA.minHitsForSharingCut = 4
+    process.pixelTracksCUDA.minHitsForSharingCut = 10
     process.pixelTracksCUDA.lateFishbone = True
     process.pixelTracksCUDA.doSharedHitCut = True
     process.pixelTracksCUDA.useSimpleTripletCleaner = True
     # process.pixelTracksCUDA.fillStatistics = True
-    process.pixelTracksCUDA.z0Cut = 12
+    #process.pixelTracksCUDA.z0Cut = 9
     process.pixelTracksCUDA.hardCurvCut = 0.012
     process.pixelTracksCUDA.ptCut = 0.95
 
@@ -394,7 +542,7 @@ def customisePhase2HLTForPatatrackOneIter(process):
         numberOfValidHits = cms.uint32( 0 ),
         numberOfLostHits = cms.uint32( 999 ),
         numberOfValidPixelHits = cms.uint32( 3 ),
-        ptErrorCut = cms.double( 5.0 ),
+        ptErrorCut = cms.double( 1.0 ),
         quality = cms.string( "loose" ),
         useVtx = cms.bool( False ),
         vertexTag = cms.InputTag( "pixelVertices" ),
@@ -430,12 +578,12 @@ def customisePhase2HLTForPatatrackOneIter(process):
     process.generalTracks.setsToMerge.pQual = True
     process.generalTracks.setsToMerge.tLists = [0]
 
-    process.initialStepTrackCandidates.cleanTrajectoryAfterInOut =  False 
-    process.initialStepTrackCandidates.doSeedingRegionRebuilding =  True 
-    process.initialStepTrackCandidates.onlyPixelHitsForSeedCleaner =  False 
-    process.initialStepTrackCandidates.reverseTrajectories =  False 
-    process.initialStepTrackCandidates.useHitsSplitting =  False 
-    process.initialStepTrackCandidates.RedundantSeedCleaner = "none"
+    #process.initialStepTrackCandidates.cleanTrajectoryAfterInOut =  False 
+    #process.initialStepTrackCandidates.doSeedingRegionRebuilding =  True 
+    #process.initialStepTrackCandidates.onlyPixelHitsForSeedCleaner =  False 
+    #process.initialStepTrackCandidates.reverseTrajectories =  False 
+    #process.initialStepTrackCandidates.useHitsSplitting =  False 
+    #process.initialStepTrackCandidates.RedundantSeedCleaner = "none"
     
     process.HLTTrackingV61Task = cms.Task(process.MeasurementTrackerEvent, 
                                           process.pixelTracksQuads,
