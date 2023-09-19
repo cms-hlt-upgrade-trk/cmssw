@@ -256,7 +256,7 @@ void CAHitNtupletGeneratorKernelsGPU<TrackerTraits>::classifyTuples(const HitsCo
   auto blockSize = 64;
 
   // classify tracks based on kinematics
-  auto numberOfBlocks = 2*this->nQuadrupletBlocks(blockSize);
+  auto numberOfBlocks = this->nQuadrupletBlocks(blockSize);
   kernel_classifyTracks<TrackerTraits>
       <<<numberOfBlocks, blockSize, 0, cudaStream>>>(tracks_view, this->params_.qualityCuts_);
 

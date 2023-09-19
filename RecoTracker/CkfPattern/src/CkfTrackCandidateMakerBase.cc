@@ -35,7 +35,7 @@
 #include <algorithm>
 #include <functional>
 
-#define VI_SORTSEED
+// #define VI_SORTSEED
 // #define VI_REPRODUCIBLE
 // #define VI_TBB
 
