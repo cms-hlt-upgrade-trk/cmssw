@@ -16,8 +16,8 @@
 #include "CAStructures.h"
 #include "GPUCACell.h"
 
-// #define GPU_DEBUG
-// #define NTUPLE_DEBUG
+//#define GPU_DEBUG
+//#define NTUPLE_DEBUG
 
 namespace gpuPixelDoublets {
 
@@ -39,34 +39,11 @@ namespace gpuPixelDoublets {
     using H = HitsConstView<TrackerTraits>;
     using T = TrackerTraits;
 
-    CellCutsT() = default;
-
-    CellCutsT(const bool doClusterCut,
-              const bool doZ0Cut,
-              const bool doPtCut,
-              const bool idealConditions,
-              const float z0Cut,
-              const float ptCut,
-              const std::vector<int>& phiCutsV)
-        : doClusterCut_(doClusterCut),
-          doZ0Cut_(doZ0Cut),
-          doPtCut_(doPtCut),
-          idealConditions_(idealConditions),
-          z0Cut_(z0Cut),
-          ptCut_(ptCut) {
-      assert(phiCutsV.size() == TrackerTraits::nPairs);
-      std::copy(phiCutsV.begin(), phiCutsV.end(), &phiCuts[0]);
-    }
-
-    bool doClusterCut_;
-    bool doZ0Cut_;
-    bool doPtCut_;
-    bool idealConditions_;  //this is actually not used by phase2
-
-    float z0Cut_;
-    float ptCut_;
-
-    int phiCuts[T::nPairs];
+    const uint32_t maxNumberOfDoublets_;
+    const bool doClusterCut_;
+    const bool doZ0Cut_;
+    const bool doPtCut_;
+    const bool idealConditions_;  //this is actually not used by phase2
 
     __device__ __forceinline__ bool zSizeCut(H hh, int i, int o) const {
       const uint32_t mi = hh[i].detectorIndex();
@@ -120,7 +97,6 @@ namespace gpuPixelDoublets {
 
   template <typename TrackerTraits>
   __device__ __forceinline__ void doubletsFromHisto(uint32_t nPairs,
-                                                    uint32_t maxNumOfDoublets,
                                                     GPUCACellT<TrackerTraits>* cells,
                                                     uint32_t* nCells,
                                                     CellNeighborsVector<TrackerTraits>* cellNeighbors,
@@ -134,12 +110,7 @@ namespace gpuPixelDoublets {
     const bool doClusterCut = cuts.doClusterCut_;
     const bool doZ0Cut = cuts.doZ0Cut_;
     const bool doPtCut = cuts.doPtCut_;
-
-    const float z0cut = cuts.z0Cut_;      // cm
-    const float hardPtCut = cuts.ptCut_;  // GeV
-    // cm (1 GeV track has 1 GeV/c / (e * 3.8T) ~ 87 cm radius in a 3.8T field)
-    const float minRadius = hardPtCut * 87.78f;
-    const float minRadius2T4 = 4.f * minRadius * minRadius;
+    const uint32_t maxNumOfDoublets = cuts.maxNumberOfDoublets_;
 
     using PhiBinner = typename TrackingRecHitSoA<TrackerTraits>::PhiBinner;
 
@@ -206,13 +177,19 @@ namespace gpuPixelDoublets {
 
       if (mez < TrackerTraits::minz[pairLayerId] || mez > TrackerTraits::maxz[pairLayerId])
         continue;
-      //if(inner == 0 && outer == 2) printf("%d\n",__LINE__);
+
       if (doClusterCut && outer > pixelTopology::last_barrel_layer && cuts.clusterCut(hh, i))
         continue;
-      //if(inner == 0 && outer == 2) printf("%d\n",__LINE__);
+
       auto mep = hh[i].iphi();
       auto mer = hh[i].rGlobal();
 
+      // all cuts: true if fails
+      constexpr float z0cut = TrackerTraits::z0Cut;              // cm
+      constexpr float hardPtCut = TrackerTraits::doubletHardPt;  // GeV
+      // cm (1 GeV track has 1 GeV/c / (e * 3.8T) ~ 87 cm radius in a 3.8T field)
+      constexpr float minRadius = hardPtCut * 87.78f;
+      constexpr float minRadius2T4 = 4.f * minRadius * minRadius;
       auto ptcut = [&](int j, int16_t idphi) {
         auto r2t4 = minRadius2T4;
         auto ri = mer;
@@ -224,10 +201,10 @@ namespace gpuPixelDoublets {
         auto zo = hh[j].zGlobal();
         auto ro = hh[j].rGlobal();
         auto dr = ro - mer;
-        return dr > TrackerTraits::maxr[pairLayerId] || dr < 0 || std::abs((mez * ro - mer * zo)) > z0cut * dr; 
+        return dr > TrackerTraits::maxr[pairLayerId] || dr < 0 || std::abs((mez * ro - mer * zo)) > z0cut * dr;
       };
 
-      auto iphicut = cuts.phiCuts[pairLayerId];
+      auto iphicut = TrackerTraits::phicuts[pairLayerId];
 
       auto kl = PhiBinner::bin(int16_t(mep - iphicut));
       auto kh = PhiBinner::bin(int16_t(mep + iphicut));
@@ -257,21 +234,19 @@ namespace gpuPixelDoublets {
 
           if (mo > gpuClustering::maxNumModules)
             continue;  //    invalid
-          //if(inner == 0 && outer == 2) printf("%d\n",__LINE__);
+
           if (doZ0Cut && z0cutoff(oi))
             continue;
-          //if(inner == 0 && outer == 2) printf("%d\n",__LINE__);
           auto mop = hh[oi].iphi();
           uint16_t idphi = std::min(std::abs(int16_t(mop - mep)), std::abs(int16_t(mep - mop)));
           if (idphi > iphicut)
             continue;
-          //if(inner == 0 && outer == 2) printf("%d\n",__LINE__);
+
           if (doClusterCut && cuts.zSizeCut(hh, i, oi))
             continue;
-          //if(inner == 0 && outer == 2) printf("%d\n",__LINE__);
           if (doPtCut && ptcut(oi, idphi))
             continue;
-          //if(inner == 0 && outer == 2) printf("%d\n",__LINE__);
+
           auto ind = atomicAdd(nCells, 1);
           if (ind >= maxNumOfDoublets) {
             atomicSub(nCells, 1);
@@ -289,8 +264,8 @@ namespace gpuPixelDoublets {
       }
 //      #endif
 #ifdef GPU_DEBUG
-      if (tooMany > 0 or (inner == 0 && outer == 2))
-        printf("OuterHitOfCell full for %d in layer %d/%d, %d,%d %d, %d %.3f %.3f %.3f\n",
+      if (tooMany > 0)
+        printf("OuterHitOfCell full for %d in layer %d/%d, %d,%d %d, %d %.3f %.3f\n",
                i,
                inner,
                outer,
@@ -299,8 +274,7 @@ namespace gpuPixelDoublets {
                tooMany,
                iphicut,
                TrackerTraits::minz[pairLayerId],
-               TrackerTraits::maxz[pairLayerId],
-               TrackerTraits::maxr[pairLayerId]);
+               TrackerTraits::maxz[pairLayerId]);
 #endif
     }  // loop in block...
   }

@@ -142,14 +142,11 @@ void SeedGeneratorFromProtoTracksEDProducer::produce(edm::Event& ev, const edm::
       sort(hits.begin(), hits.end(), HitLessByRadius());
 
       if (hits.size() > 1) {
-
         double mom_perp =
             sqrt(proto.momentum().x() * proto.momentum().x() + proto.momentum().y() * proto.momentum().y());
-        GlobalTrackingRegion region(mom_perp, vtx, 0.2*100., 0.2*100.);
+        GlobalTrackingRegion region(mom_perp, vtx, 0.2, 0.2);
 
         seedCreator_.init(region, es, nullptr);
-
-        // std::cout << "> seed with:" << hits.size() << " - " << proto.pt() << std::endl;
         if (hits.size() > 3 and not includeFourthHit_)
           seedCreator_.makeSeed(*result, {hits[0], hits[1], hits[2]});
         else

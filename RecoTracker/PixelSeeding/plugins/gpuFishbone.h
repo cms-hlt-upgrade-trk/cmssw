@@ -35,7 +35,6 @@ namespace gpuPixelDoublets {
                            uint32_t const* __restrict__ nCells,
                            OuterHitOfCell<TrackerTraits> const isOuterHitOfCellWrap,
                            int32_t nHits,
-                          //  CellCutsT<TrackerTraits> const& cuts,
                            bool checkTrack) {
     constexpr auto maxCellsPerHit = GPUCACellT<TrackerTraits>::maxCellsPerHit;
 
@@ -88,18 +87,7 @@ namespace gpuPixelDoublets {
           // must be different detectors
           //        if (d[ic]==d[jc]) continue;
           auto cos12 = x[ic] * x[jc] + y[ic] * y[jc] + z[ic] * z[jc];
-          
-          auto inner1 = TrackerTraits::layerPairs[l[ic]*2];
-          auto outer1 = TrackerTraits::layerPairs[l[ic]*2 + 1];
-          auto inner2 = TrackerTraits::layerPairs[l[jc]*2];
-          auto outer2 = TrackerTraits::layerPairs[l[jc]*2 + 1];
-
-          bool isJumpingBarrel = ((outer1 - inner1) == 2) and ((outer2 - inner2) == 2);
-          isJumpingBarrel = isJumpingBarrel and (outer1 < 4) and (outer2 < 4) and (inner1 == 0) and (inner2==0);
-          
-          auto factor = (isJumpingBarrel) ? 0.999998f : 0.99999f;
-
-          if (d[ic] != d[jc] && cos12 * cos12 >= factor * (n[ic] * n[jc])) {
+          if (d[ic] != d[jc] && cos12 * cos12 >= 0.99999f * (n[ic] * n[jc])) {
             // alligned:  kill farthest (prefer consecutive layers)
             // if same layer prefer farthest (longer level arm) and make space for intermediate hit
             bool sameLayer = l[ic] == l[jc];
