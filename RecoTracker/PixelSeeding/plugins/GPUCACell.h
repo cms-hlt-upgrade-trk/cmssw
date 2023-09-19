@@ -324,9 +324,9 @@ public:
               ((!startAt0) && hole0(hh, cells[tmpNtuplet[0]])))
 #endif
           {
-            hindex_type hits[TrackerTraits::maxDepth + 2];
+            constexpr int maxFB = 3;  // for the time being let's limit this
+            hindex_type hits[TrackerTraits::maxDepth + maxFB];
             auto nh = 0U;
-            constexpr int maxFB = 2;  // for the time being let's limit this
             int nfb = 0;
             for (auto c : tmpNtuplet) {
               hits[nh++] = cells[c].theInnerHitId;
