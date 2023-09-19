@@ -11,6 +11,7 @@ namespace {
 TrackWithVertexSelector::TrackWithVertexSelector(const edm::ParameterSet &iConfig, edm::ConsumesCollector &iC)
     : numberOfValidHits_(iConfig.getParameter<uint32_t>("numberOfValidHits")),
       numberOfValidPixelHits_(iConfig.getParameter<uint32_t>("numberOfValidPixelHits")),
+      maxNumberOfValidPixelHits_(iConfig.getParameter<uint32_t>("maxNumberOfValidPixelHits")),
       numberOfLostHits_(iConfig.getParameter<uint32_t>("numberOfLostHits")),
       normalizedChi2_(iConfig.getParameter<double>("normalizedChi2")),
       ptMin_(iConfig.getParameter<double>("ptMin")),
@@ -49,6 +50,7 @@ void TrackWithVertexSelector::init(const edm::Event &event) {
 bool TrackWithVertexSelector::testTrack(const reco::Track &t) const {
   using std::abs;
   if ((t.numberOfValidHits() >= numberOfValidHits_) &&
+      (static_cast<unsigned int>(t.hitPattern().numberOfValidPixelHits()) <= maxNumberOfValidPixelHits_) &&
       (static_cast<unsigned int>(t.hitPattern().numberOfValidPixelHits()) >= numberOfValidPixelHits_) &&
       (t.numberOfLostHits() <= numberOfLostHits_) && (t.normalizedChi2() <= normalizedChi2_) &&
       (t.ptError() / t.pt() * std::max(1., t.normalizedChi2()) <= ptErrorCut_) &&
