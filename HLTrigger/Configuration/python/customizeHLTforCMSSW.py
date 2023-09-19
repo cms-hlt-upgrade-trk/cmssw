@@ -237,6 +237,34 @@ def customizeHLTfor42497(process):
     return process
 
 
+def customizeHLTfor41632(process):
+    for producerType in [
+        'SiPixelRawToClusterCUDA',
+        'SiPixelRawToClusterCUDAPhase1',
+        'SiPixelRawToClusterCUDAHIonPhase1',
+    ]:
+        for producer in producers_by_type(process, producerType):
+            # use explicit cms.double as parameters may not already be present, and
+            # set values to the correct Run-3 values (even when the parameters are already defined)
+            producer.VCaltoElectronGain = cms.double(1.)
+            producer.VCaltoElectronGain_L1 = cms.double(1.)
+            producer.VCaltoElectronOffset = cms.double(0.)
+            producer.VCaltoElectronOffset_L1 = cms.double(0.)
+
+    return process
+
+def customizeHLTfor42410(process):
+    for producerType in [
+        'SiPixelRawToClusterCUDA',
+        'SiPixelRawToClusterCUDAPhase1',
+        'SiPixelRawToClusterCUDAHIonPhase1',
+    ]:
+        for producer in producers_by_type(process, producerType):
+            if hasattr(producer, 'isRun2'):
+                del producer.isRun2
+
+    return process
+
 # CMSSW version specific customizations
 def customizeHLTforCMSSW(process, menuType="GRun"):
 
