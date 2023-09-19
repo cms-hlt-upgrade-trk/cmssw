@@ -219,7 +219,6 @@ namespace cms {
       std::mutex theMutex;
       using Lock = std::unique_lock<std::mutex>;
 
-      // std::cout << "collseed: " << collseed->size() << std::endl;
       // Loop over seeds
       size_t collseed_size = collseed->size();
 
@@ -386,8 +385,7 @@ namespace cms {
       });
       //{ return a.chiSquared()*b.ndof() < b.chiSquared()*a.ndof();});
 #endif
-      
-      // std::cout << "post clean: " << rawResult.size() << std::endl;
+
       // Step E: Clean the results to avoid duplicate tracks
       // Rejected ones just flagged as invalid.
       theTrajectoryCleaner->clean(rawResult);
@@ -517,12 +515,9 @@ namespace cms {
           << "========== CkfTrackCandidateMaker Info =========="
           << "number of Seed: " << collseed->size() << '\n'
           << PrintoutHelper::regressionTest(es.getData(theTrackerToken), unsmoothedResult);
-      // std::cout << "output size: " << output->size() << std::endl;
+
       assert(viTotHits >= 0);  // just to use it...
       // std::cout << "VICkfPattern result " << output->size() << " " << viTotHits << std::endl;
-
-      // for (vector<Trajectory>::const_iterator it = unsmoothedResult.begin(); it != unsmoothedResult.end(); ++it)
-      //     std::cout << "STOPREASON: " << int(it->stopReason()) << ";" << (it->seedRef()).get()->nHits() << std::endl;
 
       if (theTrajectoryOutput) {
         outputT->swap(unsmoothedResult);
